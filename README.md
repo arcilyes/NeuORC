@@ -18,3 +18,6 @@ Developed using Python, this software aims to provide an intuitive learning expe
 
 For more details, refer to the documentation included in the repository. **Happy learning!**
 
+## **Screenshot:**
+![image](https://github.com/arcilyes/NeuORC/assets/68187936/dc384297-7adc-4295-99d6-1635dd2547f2)
+
