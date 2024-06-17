@@ -12,10 +12,11 @@ import wx
 import wx.adv
 from math import floor
 import CoolProp
-import CoolProp.CoolProp as CP
+import CoolProp.CoolProp as CP,json
 from CoolProp.Plots import StateContainer
 from CoolProp.Plots import PropertyPlot
 from numpy import log, log10
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -28,11 +29,31 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
+
+# with open('R1336mzz(E).json', 'r') as file:
+#     # JSON verilerini okuyun ve bir Python sözlüğüne dönüştürün
+#     R1336mzze = json.load(file)
+# 
+# CP.add_fluids_as_JSON("HEOS", json.dumps(R1336mzze))
+# 
+# # Overwrite fluids ayarını etkinleştirin
+# CP.set_config_bool(CP.OVERWRITE_FLUIDS, True)
+
+# JSON dosyasının yolunu alın
+json_path = resource_path('R1336mzz(E).json')
+
+# JSON dosyasını okuyun
+with open(json_path, 'r') as file:
+    R1336mzze = json.load(file)
+
+# JSON verilerini ekleyin
+CP.add_fluids_as_JSON("HEOS", json.dumps(R1336mzze))
+
 class MyFrame(wx.Frame):
     DEFAULT_STYLE = wx.DEFAULT_FRAME_STYLE
     def __init__(self):
         style = MyFrame.DEFAULT_STYLE
-        wx.Frame.__init__(self, None, style=style, title="NeuORC v1.0")
+        wx.Frame.__init__(self, None, style=style, title="NeuORC v1.1")
         self.SetSize((1500, 900))
         self.Maximize(True)
         self.fluid = 'Water'
@@ -113,7 +134,7 @@ class MyFrame(wx.Frame):
         sel_fld_lbl = wx.StaticText(self.Design, wx.ID_ANY, "Selected fluid:")
         sizer_2.Add(sel_fld_lbl, 1, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 5)
 
-        self.combo_box_1 = wx.ComboBox(self.Design, wx.ID_ANY, choices=["1-Butene", "Acetone", "Air", "Ammonia", "Argon", "Benzene", "CarbonDioxide", "CarbonMonoxide", "CarbonylSulfide", "CycloHexane", "CycloPropane", "Cyclopentane", "D4", "D5", "D6", "Deuterium", "Dichloroethane", "DiethylEther", "DimethylCarbonate", "DimethylEther", "Ethane", "Ethanol", "EthylBenzene", "Ethylene", "EthyleneOxide", "Fluorine", "HFE143m", "HeavyWater", "Helium", "Hydrogen", "HydrogenChloride", "HydrogenSulfide", "IsoButane", "IsoButene", "Isohexane", "Isopentane", "Krypton", "MD2M", "MD3M", "MD4M", "MDM", "MM", "Methane", "Methanol", "MethylLinoleate", "MethylLinolenate", "MethylOleate", "MethylPalmitate", "MethylStearate", "Neon", "Neopentane", "Nitrogen", "NitrousOxide", "Novec649", "OrthoDeuterium", "OrthoHydrogen", "Oxygen", "ParaDeuterium", "ParaHydrogen", "Propylene", "Propyne", "R11", "R113", "R114", "R115", "R116", "R12", "R123", "R1233zd(E)", "R1234yf", "R1234ze(E)", "R1234ze(Z)", "R124", "R1243zf", "R125", "R13", "R134a", "R13I1", "R14", "R141b", "R142b", "R143a", "R152A", "R161", "R21", "R218", "R22", "R227EA", "R23", "R236EA", "R236FA", "R245ca", "R245fa", "R32", "R365MFC", "R40", "R404A", "R407C", "R41", "R410A", "R507A", "RC318", "SES36", "SulfurDioxide", "SulfurHexafluoride", "Toluene", "Water", "Xenon", "cis-2-Butene", "m-Xylene", "n-Butane", "n-Decane", "n-Dodecane", "n-Heptane", "n-Hexane", "n-Nonane", "n-Octane", "n-Pentane", "n-Propane", "n-Undecane", "o-Xylene", "p-Xylene", "trans-2-Butene"], style=wx.CB_DROPDOWN | wx.CB_READONLY)
+        self.combo_box_1 = wx.ComboBox(self.Design, wx.ID_ANY, choices=["1-Butene", "Acetone", "Air", "Ammonia", "Argon", "Benzene", "CarbonDioxide", "CarbonMonoxide", "CarbonylSulfide", "CycloHexane", "CycloPropane", "Cyclopentane", "D4", "D5", "D6", "Deuterium", "Dichloroethane", "DiethylEther", "DimethylCarbonate", "DimethylEther", "Ethane", "Ethanol", "EthylBenzene", "Ethylene", "EthyleneOxide", "Fluorine", "HFE143m", "HeavyWater", "Helium", "Hydrogen", "HydrogenChloride", "HydrogenSulfide", "IsoButane", "IsoButene", "Isohexane", "Isopentane", "Krypton", "MD2M", "MD3M", "MD4M", "MDM", "MM", "Methane", "Methanol", "MethylLinoleate", "MethylLinolenate", "MethylOleate", "MethylPalmitate", "MethylStearate", "Neon", "Neopentane", "Nitrogen", "NitrousOxide", "Novec649", "OrthoDeuterium", "OrthoHydrogen", "Oxygen", "ParaDeuterium", "ParaHydrogen", "Propylene", "Propyne", "R11", "R113", "R114", "R115", "R116", "R12", "R123", "R1233zd(E)", "R1234yf", "R1234ze(E)", "R1234ze(Z)","R1336mzz(E)" ,"R124", "R1243zf", "R125", "R13", "R134a", "R13I1", "R14", "R141b", "R142b", "R143a", "R152A", "R161", "R21", "R218", "R22", "R227EA", "R23", "R236EA", "R236FA", "R245ca", "R245fa", "R32", "R365MFC", "R40", "R404A", "R407C", "R41", "R410A", "R507A", "RC318", "SES36", "SulfurDioxide", "SulfurHexafluoride", "Toluene", "Water", "Xenon", "cis-2-Butene", "m-Xylene", "n-Butane", "n-Decane", "n-Dodecane", "n-Heptane", "n-Hexane", "n-Nonane", "n-Octane", "n-Pentane", "n-Propane", "n-Undecane", "o-Xylene", "p-Xylene", "trans-2-Butene"], style=wx.CB_DROPDOWN | wx.CB_READONLY)
         self.combo_box_1.SetSelection(0)
         sizer_2.Add(self.combo_box_1, 1, wx.ALIGN_CENTER_VERTICAL, 8)
         
@@ -954,6 +975,5 @@ if __name__ == "__main__":
     app = MyApp(0)
     app.MainLoop()
     
-
 
 
