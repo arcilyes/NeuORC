@@ -1,0 +1,4 @@
+CoolProp==6.6.0
+matplotlib==3.7.0
+numpy==1.24.2
+wxPython==4.2.0
