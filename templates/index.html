@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuORC v1.1 – Organic Rankine Cycle Calculator</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <style>
+    :root {
+      --neu-blue: #1a3a5c;
+      --neu-light: #e8f0f7;
+      --accent: #2e7dbe;
+    }
+    body { background: #f4f6f9; font-size: 0.88rem; }
+    #topbar {
+      background: var(--neu-blue);
+      color: #fff;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #topbar img { height: 44px; }
+    #topbar h1 { font-size: 1.2rem; margin: 0; font-weight: 700; }
+    #topbar p  { font-size: 0.75rem; margin: 0; opacity: .8; }
+    .section-title {
+      background: var(--neu-blue);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 4px 4px 0 0;
+      font-weight: 600;
+      font-size: 0.82rem;
+      letter-spacing: .03em;
+    }
+    .card-box {
+      border: 1px solid #c5d3e0;
+      border-radius: 0 4px 4px 4px;
+      padding: 10px 12px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+    label { font-weight: 500; margin-bottom: 2px; }
+    .input-group-sm .form-control,
+    .input-group-sm .form-select { font-size: 0.85rem; }
+    #btn-calc {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 8px 32px;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    #btn-calc:hover { background: #1d5f96; }
+    #btn-calc:disabled { background: #8aabb8; cursor: not-allowed; }
+    #summary-box {
+      background: #fff;
+      border: 1px solid #c5d3e0;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      min-height: 52px;
+      line-height: 1.8;
+    }
+    .result-table {
+      font-size: 0.8rem;
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .result-table th {
+      background: var(--neu-blue);
+      color: #fff;
+      padding: 5px 8px;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .result-table td {
+      padding: 4px 8px;
+      border-bottom: 1px solid #e0e8f0;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .result-table tr:nth-child(even) td { background: var(--neu-light); }
+    .result-table .row-label {
+      background: #e4ecf5;
+      font-weight: 600;
+      text-align: left;
+      color: var(--neu-blue);
+    }
+    #plot-img {
+      max-width: 100%;
+      border: 1px solid #c5d3e0;
+      border-radius: 4px;
+    }
+    #orc-img { max-width: 100%; border-radius: 4px; }
+    #error-alert {
+      display: none;
+      margin-top: 8px;
+    }
+    #spinner {
+      display: none;
+      margin-left: 10px;
+    }
+    .about-text {
+      font-size: 0.78rem;
+      color: #555;
+      margin-top: 4px;
+    }
+    @media (max-width: 992px) {
+      .col-inputs { order: 1; }
+      .col-diagram { order: 2; }
+      .col-plot    { order: 3; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div id="topbar">
+  <img src="/static/images/Unilogo.png" alt="NEU Logo">
+  <div>
+    <h1>NeuORC v1.1</h1>
+    <p>Necmettin Erbakan University – Organic Rankine Cycle Calculator</p>
+  </div>
+</div>
+
+<div class="container-fluid mt-2 px-3">
+
+  <!-- Top row: inputs | ORC diagram | T-S plot -->
+  <div class="row g-2">
+
+    <!-- ─── INPUTS ─── -->
+    <div class="col-lg-3 col-inputs">
+
+      <!-- Fluid & Units -->
+      <div class="section-title">Working Fluid &amp; Units</div>
+      <div class="card-box">
+        <div class="row g-2 align-items-end">
+          <div class="col-8">
+            <label for="fluid">Selected fluid</label>
+            <select id="fluid" class="form-select form-select-sm">
+              {% for f in fluids %}
+              <option value="{{ f }}" {% if f == '1-Butene' %}selected{% endif %}>{{ f }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-4">
+            <label>Units</label>
+            <div class="d-flex gap-2 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="units" id="si" value="SI" checked>
+                <label class="form-check-label" for="si">SI</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="units" id="british" value="British">
+                <label class="form-check-label" for="british">British</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evaporator -->
+      <div class="section-title">Evaporator</div>
+      <div class="card-box">
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="Tsource">Heat source temperature</label>
+          </div>
+          <div class="col-4">
+            <input type="number" id="Tsource" class="form-control form-control-sm" value="423.15" min="0" step="0.01">
+          </div>
+          <div class="col-2">
+            <select id="Tsource_unit" class="form-select form-select-sm">
+              <option value="K">K</option>
+              <option value="C">°C</option>
+            </select>
+          </div>
+        </div>
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="msource">Heat source mass flow</label>
+          </div>
+          <div class="col-4">
+            <input type="number" id="msource" class="form-control form-control-sm" value="3600" min="0" step="0.01">
+          </div>
+          <div class="col-2">
+            <select id="msource_unit" class="form-select form-select-sm">
+              <option value="kgh">kg/h</option>
+              <option value="kgs">kg/s</option>
+            </select>
+          </div>
+        </div>
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="evappinch">Pinch temp. difference (K)</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="evappinch" class="form-control form-control-sm" value="10" min="0" step="0.001">
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label for="evapeff">Evaporator effectiveness (%)</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="evapeff" class="form-control form-control-sm" value="80" min="0" max="100" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <!-- Condenser -->
+      <div class="section-title">Condenser</div>
+      <div class="card-box">
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="Tsink">Cooling flow temperature</label>
+          </div>
+          <div class="col-4">
+            <input type="number" id="Tsink" class="form-control form-control-sm" value="288.15" min="0" step="0.01">
+          </div>
+          <div class="col-2">
+            <select id="Tsink_unit" class="form-select form-select-sm">
+              <option value="K">K</option>
+              <option value="C">°C</option>
+            </select>
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label for="condpinch">Pinch temp. difference (K)</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="condpinch" class="form-control form-control-sm" value="5" min="0" step="0.001">
+          </div>
+        </div>
+      </div>
+
+      <!-- Turbine -->
+      <div class="section-title">Turbine</div>
+      <div class="card-box">
+        <div class="row g-2">
+          <div class="col-6">
+            <label for="turbeff">Isentropic efficiency (%)</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="turbeff" class="form-control form-control-sm" value="80" min="0" max="100" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <!-- Pump -->
+      <div class="section-title">Pump</div>
+      <div class="card-box">
+        <div class="row g-2">
+          <div class="col-6">
+            <label for="pumpeff">Isentropic efficiency (%)</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="pumpeff" class="form-control form-control-sm" value="70" min="0" max="100" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <!-- Economy -->
+      <div class="section-title">Economy</div>
+      <div class="card-box">
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="Uevap">U<sub>evap</sub> [kW/m²K]</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="Uevap" class="form-control form-control-sm" value="1.0" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="Ucond">U<sub>cond</sub> [kW/m²K]</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="Ucond" class="form-control form-control-sm" value="0.8" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="interest">Interest rate [%/yr]</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="interest" class="form-control form-control-sm" value="8" min="0" step="0.01">
+          </div>
+        </div>
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="lifetime">Lifetime [yr]</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="lifetime" class="form-control form-control-sm" value="20" min="1" step="1">
+          </div>
+        </div>
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <label for="optime">Annual op. time [hr]</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="optime" class="form-control form-control-sm" value="7000" min="0" step="1">
+          </div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label for="price">Electricity cost [$/kWh]</label>
+          </div>
+          <div class="col-6">
+            <input type="number" id="price" class="form-control form-control-sm" value="0.10" min="0" step="0.001">
+          </div>
+        </div>
+      </div>
+
+      <!-- Calculate button -->
+      <div class="text-center mb-2">
+        <button id="btn-calc" onclick="runCalculation()">
+          Calculate
+        </button>
+        <span id="spinner" class="spinner-border spinner-border-sm text-secondary" role="status"></span>
+      </div>
+
+      <!-- Error -->
+      <div id="error-alert" class="alert alert-danger py-2 px-3"></div>
+
+      <!-- About -->
+      <div class="about-text text-center">
+        NeuORC – GNU GPL v3 &nbsp;|&nbsp; Mehmet Berk Azdural<br>
+        Academic Advisors: Prof. Ali Kahraman, Asst. Prof. Sadık Ata
+      </div>
+    </div>
+
+    <!-- ─── ORC DIAGRAM ─── -->
+    <div class="col-lg-5 col-diagram">
+      <div class="section-title">System Diagram</div>
+      <div class="card-box p-2">
+        <img id="orc-img" src="/static/images/ORC6.png" alt="ORC Schematic">
+      </div>
+      <!-- Useful outputs summary -->
+      <div class="section-title">Useful Outputs</div>
+      <div id="summary-box">
+        <span class="text-muted">Run calculation to see results.</span>
+      </div>
+    </div>
+
+    <!-- ─── T-S DIAGRAM ─── -->
+    <div class="col-lg-4 col-plot">
+      <div class="section-title">T-S Diagram</div>
+      <div class="card-box p-2 text-center">
+        <img id="plot-img" src="" alt="T-S Diagram" style="display:none; max-height: 480px;">
+        <div id="plot-placeholder" class="text-muted py-5">T-S diagram will appear here after calculation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── RESULT TABLES ─── -->
+  <div id="results-section" style="display:none;">
+
+    <!-- State points table -->
+    <div class="section-title mt-2">Thermodynamic State Points</div>
+    <div class="card-box p-0" style="overflow-x:auto;">
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>State</th>
+            <th>Temperature (K)</th>
+            <th>Pressure (Pa)</th>
+            <th>Spec. Volume (m³/kg)</th>
+            <th>Enthalpy (J/kg)</th>
+            <th>Entropy (J/kg·K)</th>
+            <th>Phase</th>
+            <th>Vapor Quality</th>
+          </tr>
+        </thead>
+        <tbody id="states-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Performance table -->
+    <div class="row g-2 mt-1">
+      <div class="col-lg-7">
+        <div class="section-title">Cycle Performance</div>
+        <div class="card-box p-0" style="overflow-x:auto;">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>ORC mass flow (kg/s)</th>
+                <th>Cooling mass flow (kg/s)</th>
+                <th>Pre-heat power (W)</th>
+                <th>Vaporization power (W)</th>
+                <th>Evap. capacity (W)</th>
+                <th>Cond. capacity (W)</th>
+                <th>Source T<sub>out</sub> (K)</th>
+                <th>Cooling T<sub>out</sub> (K)</th>
+                <th>W<sub>pump</sub> (W)</th>
+                <th>W<sub>turbine</sub> (W)</th>
+                <th>Pressure ratio</th>
+                <th>W<sub>net</sub> (W)</th>
+                <th>η<sub>thermal</sub> (%)</th>
+              </tr>
+            </thead>
+            <tbody id="perf-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="section-title">Exergy Analysis</div>
+        <div class="card-box p-0" style="overflow-x:auto;">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>η<sub>II,evap</sub> (%)</th>
+                <th>η<sub>II,cond</sub> (%)</th>
+                <th>η<sub>II,tur</sub> (%)</th>
+                <th>η<sub>II,pump</sub> (%)</th>
+                <th>I<sub>evap</sub> (W)</th>
+                <th>I<sub>cond</sub> (W)</th>
+                <th>I<sub>turb</sub> (W)</th>
+                <th>I<sub>pump</sub> (W)</th>
+                <th>Ex<sub>in</sub> (W)</th>
+                <th>η<sub>II</sub> (%)</th>
+              </tr>
+            </thead>
+            <tbody id="exergy-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /results-section -->
+
+</div><!-- /container -->
+
+<script>
+  // Unit conversion helpers
+  function getTsource() {
+    const v = parseFloat(document.getElementById('Tsource').value);
+    return document.getElementById('Tsource_unit').value === 'C' ? v + 273.15 : v;
+  }
+  function getTsink() {
+    const v = parseFloat(document.getElementById('Tsink').value);
+    return document.getElementById('Tsink_unit').value === 'C' ? v + 273.15 : v;
+  }
+  function getMsource() {
+    const v = parseFloat(document.getElementById('msource').value);
+    return document.getElementById('msource_unit').value === 'kgh' ? v * 0.0002777778 : v;
+  }
+
+  async function runCalculation() {
+    const btn = document.getElementById('btn-calc');
+    const spinner = document.getElementById('spinner');
+    const errDiv = document.getElementById('error-alert');
+    errDiv.style.display = 'none';
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    const payload = {
+      fluid:     document.getElementById('fluid').value,
+      Tsource:   getTsource(),
+      msource:   getMsource(),
+      evappinch: parseFloat(document.getElementById('evappinch').value),
+      evapeff:   parseFloat(document.getElementById('evapeff').value),
+      Tsink:     getTsink(),
+      condpinch: parseFloat(document.getElementById('condpinch').value),
+      turbeff:   parseFloat(document.getElementById('turbeff').value),
+      pumpeff:   parseFloat(document.getElementById('pumpeff').value),
+      Uevap:     parseFloat(document.getElementById('Uevap').value),
+      Ucond:     parseFloat(document.getElementById('Ucond').value),
+      interest:  parseFloat(document.getElementById('interest').value),
+      lifetime:  parseFloat(document.getElementById('lifetime').value),
+      optime:    parseFloat(document.getElementById('optime').value),
+      price:     parseFloat(document.getElementById('price').value),
+    };
+
+    try {
+      const resp = await fetch('/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+
+      if (data.error) {
+        errDiv.textContent = data.error;
+        errDiv.style.display = 'block';
+      } else {
+        displayResults(data);
+      }
+    } catch (e) {
+      errDiv.textContent = 'Connection error: ' + e.message;
+      errDiv.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+    }
+  }
+
+  function displayResults(data) {
+    const s = data.summary;
+    const p = data.performance;
+    const ex = data.exergy;
+
+    // Summary box
+    document.getElementById('summary-box').innerHTML =
+      `<b>η:</b> ${s.eta_thermal} % &nbsp; <b>η<sub>II</sub>:</b> ${s.eta_exergy} % &nbsp; ` +
+      `<b>W<sub>net</sub>:</b> ${s.Wnet} W &nbsp; <b>EIC:</b> $${s.EIC} &nbsp; ` +
+      `<b>FIC:</b> $${s.FIC} &nbsp; <b>TIC:</b> $${s.TIC}<br>` +
+      `<b>CRF:</b> ${s.CRF} &nbsp; <b>CRC:</b> $${s.CRC} &nbsp; ` +
+      `<b>LCOE:</b> ${s.LCOE} $/kWh &nbsp; <b>SIC:</b> ${s.SIC} $/kW &nbsp; ` +
+      `<b>Payback:</b> ${s.PB} yr`;
+
+    // T-S plot
+    const img = document.getElementById('plot-img');
+    img.src = 'data:image/png;base64,' + data.plot;
+    img.style.display = 'block';
+    document.getElementById('plot-placeholder').style.display = 'none';
+
+    // State points
+    let stHtml = '';
+    data.states.forEach(st => {
+      stHtml += `<tr>
+        <td>${st.state}</td>
+        <td>${st.T}</td>
+        <td>${st.P}</td>
+        <td>${st.V}</td>
+        <td>${st.H}</td>
+        <td>${st.S}</td>
+        <td>${st.phase}</td>
+        <td>${st.X}</td>
+      </tr>`;
+    });
+    document.getElementById('states-tbody').innerHTML = stHtml;
+
+    // Performance
+    document.getElementById('perf-tbody').innerHTML = `<tr>
+      <td>${p.morc}</td>
+      <td>${p.msink}</td>
+      <td>${p.Qo}</td>
+      <td>${p.Qb}</td>
+      <td>${p.Qevap}</td>
+      <td>${p.Qcond}</td>
+      <td>${p.Teout}</td>
+      <td>${p.Tcout}</td>
+      <td>${p.Wp}</td>
+      <td>${p.Wt}</td>
+      <td>${p.Pratio}</td>
+      <td>${p.Wnet}</td>
+      <td>${p.eta_thermal}</td>
+    </tr>`;
+
+    // Exergy
+    document.getElementById('exergy-tbody').innerHTML = `<tr>
+      <td>${ex.etaevap2}</td>
+      <td>${ex.etacond2}</td>
+      <td>${ex.etatur2}</td>
+      <td>${ex.etapump2}</td>
+      <td>${ex.Ie}</td>
+      <td>${ex.Ic}</td>
+      <td>${ex.It}</td>
+      <td>${ex.Ip}</td>
+      <td>${ex.Exin}</td>
+      <td>${ex.etaexergy}</td>
+    </tr>`;
+
+    document.getElementById('results-section').style.display = 'block';
+  }
+</script>
+</body>
+</html>
