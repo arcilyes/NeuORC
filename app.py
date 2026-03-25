@@ -24,7 +24,7 @@ app = Flask(__name__)
 
 def resource_path(relative_path):
     if getattr(sys, 'frozen', False):
-        base_path = sys._MEIPASS
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
         base_path = os.path.abspath(os.path.dirname(__file__))
     return os.path.join(base_path, relative_path)
@@ -33,7 +33,7 @@ def resource_path(relative_path):
 # Load custom refrigerant R1336mzz(E) if available
 json_path = resource_path('R1336mzz(E).json')
 try:
-    with open(json_path, 'r') as file:
+    with open(json_path, 'r', encoding='utf-8') as file:
         R1336mzze = json.load(file)
     CP.add_fluids_as_JSON("HEOS", json.dumps(R1336mzze))
 except FileNotFoundError:

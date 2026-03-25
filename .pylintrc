@@ -1,0 +1,23 @@
+[MASTER]
+extension-pkg-allow-list=CoolProp,CoolProp.CoolProp
+
+[MESSAGES CONTROL]
+# C0103: thermodynamic variables use standard engineering notation (T1, H1, S1…)
+# C0114-C0116: docstrings omitted intentionally for educational brevity
+# C0413: matplotlib.use('Agg') must be called before pyplot import
+# R0914: thermodynamic cycle calculation inherently requires many local variables
+# W0212: PyInstaller _MEIPASS is an accepted pattern
+# W0718: broad Exception is intentional — CoolProp raises generic errors
+disable=C0103,
+        C0114,
+        C0115,
+        C0116,
+        C0413,
+        R0914,
+        R0915,
+        W0212,
+        W0718,
+        I1101
+
+[FORMAT]
+max-line-length=120
