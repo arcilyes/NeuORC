@@ -17,10 +17,10 @@ NeuORC is an educational web application for thermodynamic analysis of Organic R
 ## Features
 
 - Thermodynamic cycle analysis (energy & exergy)
-- Economic analysis: EIC, FIC, TIC, LCOE, payback period
-- T-S diagram generation
+- Economic analysis: EIC, FIC, TIC, LCOE, SIC, payback period
+- T-s and h-P diagram generation with interactive switcher
 - 124 working fluids via CoolProp
-- SI unit system with °C / K input support
+- SI unit system with °C / K and kg/h / kg/s input support
 
 ## Running Locally
 
