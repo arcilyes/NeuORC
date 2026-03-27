@@ -36,10 +36,6 @@ def set_headers(response):
     return response
 
 
-@app.route('/calculate', methods=['OPTIONS'])
-def calculate_options():
-    return '', 204
-
 
 def resource_path(relative_path):
     if getattr(sys, 'frozen', False):
