@@ -1,32 +1,51 @@
-# **NeuORC Preliminary Organic Rankine Cycle Calculator README**
+---
+title: NeuORC
+emoji: ⚡
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+license: gpl-3.0
+---
 
-**Welcome to the NeuORC program's GitHub repository!**  
-This program is designed as an educational tool for understanding and applying the principles of the Organic Rankine Cycle (ORC) for power generation through waste heat recovery and geothermal energy applications.  
-ORC systems can be calculated simply by using the 124 fluids in the CoolProp library.  
-Developed using Python, this software aims to provide an intuitive learning experience through a user-friendly graphical interface.
+# NeuORC – Organic Rankine Cycle Calculator
 
-## **Getting Started:**
-- Clone the repository to your local machine or download the latest release compatible with your system.
-- Ensure Python is installed.
-- Ensure the CoolProp and wxPython libraries are installed.
-- Run the main script to launch the GUI and explore the functionalities.
+**Try it online → [NeuORC on Hugging Face Spaces](https://huggingface.co/spaces/arcilyes/NeuORC)**
 
-## **Usage:**
-- Navigate through the GUI to learn about ORC components and their operations.
-- The program requires nine thermal and six economic inputs in order to calculate. All text boxes must be filled out before applying the calculation.
-- This tool is intended for educational purposes, providing a hands-on approach to learning about ORC systems.
+NeuORC is an educational web application for thermodynamic analysis of Organic Rankine Cycle (ORC) systems for waste heat recovery and geothermal energy applications. It calculates energy, exergy, and economic performance using 124 working fluids from the CoolProp library.
 
-For more details, refer to the documentation included in the repository. **Happy learning!**
+## Features
 
-## **Dependencies:**
-- CoolProp==6.6.0
-- matplotlib==3.7.0
-- numpy==1.24.2
-- wxPython==4.2.0
+- Thermodynamic cycle analysis (energy & exergy)
+- Economic analysis: EIC, FIC, TIC, LCOE, payback period
+- T-S diagram generation
+- 124 working fluids via CoolProp
+- SI unit system with °C / K input support
 
-## **Assumptions:**
-- Heat source and cooling flow fluids are assumed to be "water.". This can be modified in code, but not in the GUI.
-- Ambient temperature is taken as 25 °C; if you put lower temperatures for cooling flow, negative values will be calculated for exergy efficiencies. 
-## **Screenshot:**
-![image](https://github.com/arcilyes/NeuORC/assets/68187936/dc384297-7adc-4295-99d6-1635dd2547f2)
+## Running Locally
 
+```bash
+git clone https://github.com/arcilyes/NeuORC.git
+cd NeuORC
+pip install -r requirements.txt
+python app.py
+```
+
+Then open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
+
+## Dependencies
+
+- CoolProp == 6.6.0
+- matplotlib >= 3.7.0
+- Flask >= 2.3.0
+
+## Assumptions
+
+- Heat source and cooling flow fluids are assumed to be water.
+- Ambient temperature is taken as 25 °C; cooling flow temperatures below 25 °C will yield negative exergy efficiency values.
+
+## License
+
+GNU GPL v3 — Mehmet Berk Azdural
+Academic Advisors: Prof. Ali Kahraman, Asst. Prof. Sadık Ata
+Necmettin Erbakan University

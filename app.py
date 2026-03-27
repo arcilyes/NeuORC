@@ -255,33 +255,35 @@ def calculate():
         pp.calc_isolines(CoolProp.iQ, num=11)
         cycle = StateContainer()
         if T4 == T1g:
+            # Two-phase turbine exit: 1→2→3f→3→4→1
             cycle[0, "T"] = T_list[0]
             cycle[0, "S"] = S_list[0]
             cycle[1, "T"] = T_list[1]
             cycle[1, "S"] = S_list[1]
-            cycle[3, "T"] = T3f
-            cycle[3, "S"] = S3f
-            cycle[4, "T"] = T_list[2]
-            cycle[4, "S"] = S_list[2]
-            cycle[5, "T"] = T_list[3]
-            cycle[5, "S"] = S_list[3]
+            cycle[2, "T"] = T3f
+            cycle[2, "S"] = S3f
+            cycle[3, "T"] = T_list[2]
+            cycle[3, "S"] = S_list[2]
+            cycle[4, "T"] = T_list[3]
+            cycle[4, "S"] = S_list[3]
+            cycle[5, "T"] = T_list[0]
+            cycle[5, "S"] = S_list[0]
+        else:
+            # Superheated turbine exit: 1→2→3f→3→4→1g→1
+            cycle[0, "T"] = T_list[0]
+            cycle[0, "S"] = S_list[0]
+            cycle[1, "T"] = T_list[1]
+            cycle[1, "S"] = S_list[1]
+            cycle[2, "T"] = T3f
+            cycle[2, "S"] = S3f
+            cycle[3, "T"] = T_list[2]
+            cycle[3, "S"] = S_list[2]
+            cycle[4, "T"] = T_list[3]
+            cycle[4, "S"] = S_list[3]
+            cycle[5, "T"] = T1g
+            cycle[5, "S"] = S1g
             cycle[6, "T"] = T_list[0]
             cycle[6, "S"] = S_list[0]
-        else:
-            cycle[0, "T"] = T_list[0]
-            cycle[0, "S"] = S_list[0]
-            cycle[1, "T"] = T_list[1]
-            cycle[1, "S"] = S_list[1]
-            cycle[3, "T"] = T3f
-            cycle[3, "S"] = S3f
-            cycle[4, "T"] = T_list[2]
-            cycle[4, "S"] = S_list[2]
-            cycle[5, "T"] = T_list[3]
-            cycle[5, "S"] = S_list[3]
-            cycle[6, "T"] = T1g
-            cycle[6, "S"] = S1g
-            cycle[7, "T"] = T_list[0]
-            cycle[7, "S"] = S_list[0]
 
         pp.draw_process(cycle)
         pp.show()

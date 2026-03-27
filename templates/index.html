@@ -108,11 +108,6 @@
       color: #555;
       margin-top: 4px;
     }
-    @media (max-width: 992px) {
-      .col-inputs { order: 1; }
-      .col-diagram { order: 2; }
-      .col-plot    { order: 3; }
-    }
   </style>
 </head>
 <body>
@@ -127,39 +122,20 @@
 </div>
 
 <div class="container-fluid mt-2 px-3">
-
-  <!-- Top row: inputs | ORC diagram | T-S plot -->
   <div class="row g-2">
 
     <!-- ─── INPUTS ─── -->
-    <div class="col-lg-3 col-inputs">
+    <div class="col-lg-3">
 
-      <!-- Fluid & Units -->
-      <div class="section-title">Working Fluid &amp; Units</div>
+      <!-- Fluid -->
+      <div class="section-title">Working Fluid</div>
       <div class="card-box">
-        <div class="row g-2 align-items-end">
-          <div class="col-8">
-            <label for="fluid">Selected fluid</label>
-            <select id="fluid" class="form-select form-select-sm">
-              {% for f in fluids %}
-              <option value="{{ f }}" {% if f == '1-Butene' %}selected{% endif %}>{{ f }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-4">
-            <label>Units</label>
-            <div class="d-flex gap-2 mt-1">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="units" id="si" value="SI" checked>
-                <label class="form-check-label" for="si">SI</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="units" id="british" value="British">
-                <label class="form-check-label" for="british">British</label>
-              </div>
-            </div>
-          </div>
-        </div>
+        <label for="fluid">Selected fluid</label>
+        <select id="fluid" class="form-select form-select-sm">
+          {% for f in fluids %}
+          <option value="{{ f }}" {% if f == '1-Butene' %}selected{% endif %}>{{ f }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <!-- Evaporator -->
@@ -170,12 +146,12 @@
             <label for="Tsource">Heat source temperature</label>
           </div>
           <div class="col-4">
-            <input type="number" id="Tsource" class="form-control form-control-sm" value="423.15" min="0" step="0.01">
+            <input type="number" id="Tsource" class="form-control form-control-sm" value="150" min="-273.15" step="0.01">
           </div>
           <div class="col-2">
             <select id="Tsource_unit" class="form-select form-select-sm">
+              <option value="C" selected>°C</option>
               <option value="K">K</option>
-              <option value="C">°C</option>
             </select>
           </div>
         </div>
@@ -219,12 +195,12 @@
             <label for="Tsink">Cooling flow temperature</label>
           </div>
           <div class="col-4">
-            <input type="number" id="Tsink" class="form-control form-control-sm" value="288.15" min="0" step="0.01">
+            <input type="number" id="Tsink" class="form-control form-control-sm" value="15" min="-273.15" step="0.01">
           </div>
           <div class="col-2">
             <select id="Tsink_unit" class="form-select form-select-sm">
+              <option value="C" selected>°C</option>
               <option value="K">K</option>
-              <option value="C">°C</option>
             </select>
           </div>
         </div>
@@ -335,57 +311,56 @@
       </div>
     </div>
 
-    <!-- ─── ORC DIAGRAM ─── -->
-    <div class="col-lg-5 col-diagram">
-      <div class="section-title">System Diagram</div>
-      <div class="card-box p-2">
-        <img id="orc-img" src="/static/images/ORC6.png" alt="ORC Schematic">
+    <!-- ─── RIGHT PANEL ─── -->
+    <div class="col-lg-9">
+
+      <!-- Diagrams row -->
+      <div class="row g-2 mb-2">
+        <div class="col-lg-6">
+          <div class="section-title">System Diagram</div>
+          <div class="card-box p-2">
+            <img id="orc-img" src="/static/images/ORC6.png" alt="ORC Schematic">
+          </div>
+          <div class="section-title">Useful Outputs</div>
+          <div id="summary-box">
+            <span class="text-muted">Run calculation to see results.</span>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="section-title">T-S Diagram</div>
+          <div class="card-box p-2 text-center">
+            <img id="plot-img" src="" alt="T-S Diagram" style="display:none; max-height: 480px;">
+            <div id="plot-placeholder" class="text-muted py-5">T-S diagram will appear here after calculation.</div>
+          </div>
+        </div>
       </div>
-      <!-- Useful outputs summary -->
-      <div class="section-title">Useful Outputs</div>
-      <div id="summary-box">
-        <span class="text-muted">Run calculation to see results.</span>
-      </div>
-    </div>
 
-    <!-- ─── T-S DIAGRAM ─── -->
-    <div class="col-lg-4 col-plot">
-      <div class="section-title">T-S Diagram</div>
-      <div class="card-box p-2 text-center">
-        <img id="plot-img" src="" alt="T-S Diagram" style="display:none; max-height: 480px;">
-        <div id="plot-placeholder" class="text-muted py-5">T-S diagram will appear here after calculation.</div>
-      </div>
-    </div>
-  </div>
+      <!-- Result tables (hidden until calculation) -->
+      <div id="results-section" style="display:none;">
 
-  <!-- ─── RESULT TABLES ─── -->
-  <div id="results-section" style="display:none;">
+        <!-- State points -->
+        <div class="section-title">Thermodynamic State Points</div>
+        <div class="card-box p-0 mb-2" style="overflow-x:auto;">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th>State</th>
+                <th>Temperature (K)</th>
+                <th>Pressure (Pa)</th>
+                <th>Spec. Volume (m³/kg)</th>
+                <th>Enthalpy (J/kg)</th>
+                <th>Entropy (J/kg·K)</th>
+                <th>Phase</th>
+                <th>Vapor Quality</th>
+              </tr>
+            </thead>
+            <tbody id="states-tbody"></tbody>
+          </table>
+        </div>
 
-    <!-- State points table -->
-    <div class="section-title mt-2">Thermodynamic State Points</div>
-    <div class="card-box p-0" style="overflow-x:auto;">
-      <table class="result-table">
-        <thead>
-          <tr>
-            <th>State</th>
-            <th>Temperature (K)</th>
-            <th>Pressure (Pa)</th>
-            <th>Spec. Volume (m³/kg)</th>
-            <th>Enthalpy (J/kg)</th>
-            <th>Entropy (J/kg·K)</th>
-            <th>Phase</th>
-            <th>Vapor Quality</th>
-          </tr>
-        </thead>
-        <tbody id="states-tbody"></tbody>
-      </table>
-    </div>
-
-    <!-- Performance table -->
-    <div class="row g-2 mt-1">
-      <div class="col-lg-7">
+        <!-- Cycle Performance -->
         <div class="section-title">Cycle Performance</div>
-        <div class="card-box p-0" style="overflow-x:auto;">
+        <div class="card-box p-0 mb-2" style="overflow-x:auto;">
           <table class="result-table">
             <thead>
               <tr>
@@ -407,10 +382,10 @@
             <tbody id="perf-tbody"></tbody>
           </table>
         </div>
-      </div>
-      <div class="col-lg-5">
+
+        <!-- Exergy Analysis -->
         <div class="section-title">Exergy Analysis</div>
-        <div class="card-box p-0" style="overflow-x:auto;">
+        <div class="card-box p-0 mb-2" style="overflow-x:auto;">
           <table class="result-table">
             <thead>
               <tr>
@@ -429,15 +404,14 @@
             <tbody id="exergy-tbody"></tbody>
           </table>
         </div>
-      </div>
-    </div>
 
-  </div><!-- /results-section -->
+      </div><!-- /results-section -->
+    </div><!-- /col-lg-9 -->
 
+  </div><!-- /row -->
 </div><!-- /container -->
 
 <script>
-  // Unit conversion helpers
   function getTsource() {
     const v = parseFloat(document.getElementById('Tsource').value);
     return document.getElementById('Tsource_unit').value === 'C' ? v + 273.15 : v;
@@ -505,7 +479,6 @@
     const p = data.performance;
     const ex = data.exergy;
 
-    // Summary box
     document.getElementById('summary-box').innerHTML =
       `<b>η:</b> ${s.eta_thermal} % &nbsp; <b>η<sub>II</sub>:</b> ${s.eta_exergy} % &nbsp; ` +
       `<b>W<sub>net</sub>:</b> ${s.Wnet} W &nbsp; <b>EIC:</b> $${s.EIC} &nbsp; ` +
@@ -514,13 +487,11 @@
       `<b>LCOE:</b> ${s.LCOE} $/kWh &nbsp; <b>SIC:</b> ${s.SIC} $/kW &nbsp; ` +
       `<b>Payback:</b> ${s.PB} yr`;
 
-    // T-S plot
     const img = document.getElementById('plot-img');
     img.src = 'data:image/png;base64,' + data.plot;
     img.style.display = 'block';
     document.getElementById('plot-placeholder').style.display = 'none';
 
-    // State points
     let stHtml = '';
     data.states.forEach(st => {
       stHtml += `<tr>
@@ -536,7 +507,6 @@
     });
     document.getElementById('states-tbody').innerHTML = stHtml;
 
-    // Performance
     document.getElementById('perf-tbody').innerHTML = `<tr>
       <td>${p.morc}</td>
       <td>${p.msink}</td>
@@ -553,7 +523,6 @@
       <td>${p.eta_thermal}</td>
     </tr>`;
 
-    // Exergy
     document.getElementById('exergy-tbody').innerHTML = `<tr>
       <td>${ex.etaevap2}</td>
       <td>${ex.etacond2}</td>
