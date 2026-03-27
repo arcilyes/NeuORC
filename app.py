@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 #
-# NeuORC v1.1 - Web Interface
+# NeuORC v1.2 - Web Interface
 # Necmettin Erbakan University Organic Rankine Cycle Calculator
 #
 import os

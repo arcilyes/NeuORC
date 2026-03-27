@@ -1,5 +1,5 @@
 ---
-title: NeuORC
+title: NeuORC v1.2
 emoji: ⚡
 colorFrom: blue
 colorTo: indigo
@@ -8,7 +8,7 @@ pinned: false
 license: gpl-3.0
 ---
 
-# NeuORC – Organic Rankine Cycle Calculator
+# NeuORC v1.2 – Organic Rankine Cycle Calculator
 
 **Try it online → [NeuORC on Hugging Face Spaces](https://huggingface.co/spaces/arcilyes/NeuORC)**
 
