@@ -293,7 +293,6 @@ def calculate():
             cycle[6, "S"] = S_list[0]
 
         pp.draw_process(cycle)
-        pp.show()
         pp.figure.set_size_inches(6, 5)
 
         buf = io.BytesIO()
