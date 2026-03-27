@@ -22,6 +22,25 @@ from flask import Flask, render_template, request, jsonify  # noqa: E402
 app = Flask(__name__)
 
 
+@app.after_request
+def set_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net "
+        "https://raw.githubusercontent.com; "
+        "connect-src 'self'; "
+        "img-src 'self' data: https://raw.githubusercontent.com;"
+    )
+    return response
+
+
+@app.route('/calculate', methods=['OPTIONS'])
+def calculate_options():
+    return '', 204
+
+
 def resource_path(relative_path):
     if getattr(sys, 'frozen', False):
         base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
@@ -293,6 +312,7 @@ def calculate():
             cycle[6, "S"] = S_list[0]
 
         pp.draw_process(cycle)
+        pp.draw()
         pp.figure.set_size_inches(6, 5)
 
         buf = io.BytesIO()
