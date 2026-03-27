@@ -71,10 +71,17 @@ def index():
     return render_template('index.html', fluids=FLUIDS)
 
 
+@app.errorhandler(400)
+@app.errorhandler(404)
+@app.errorhandler(500)
+def json_error(e):
+    return jsonify({'error': str(e)}), e.code
+
+
 @app.route('/calculate', methods=['POST'])
 def calculate():
-    data = request.json
     try:
+        data = request.get_json(force=True, silent=True) or {}
         fluid = data['fluid']
         Tsource = float(data['Tsource'])
         msource = float(data['msource'])
