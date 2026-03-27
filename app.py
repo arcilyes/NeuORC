@@ -14,9 +14,8 @@ from math import log, log10
 import matplotlib
 matplotlib.use('Agg')  # Must be set before pyplot import; noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
-import CoolProp  # noqa: E402
+import numpy as np  # noqa: E402
 import CoolProp.CoolProp as CP  # noqa: E402
-from CoolProp.Plots import StateContainer, PropertyPlot  # noqa: E402
 from flask import Flask, render_template, request, jsonify  # noqa: E402
 
 app = Flask(__name__)
@@ -269,50 +268,48 @@ def calculate():
         X3 = 1.0
         X4_disp = X4
 
-        # Generate T-S diagram
-        T_list = [T1, T2, T3, T4]
-        S_list = [S1, S2, S3, S4]
+        # Generate T-S diagram with direct matplotlib (no PropertyPlot.draw)
+        T_crit = CP.PropsSI('Tcrit', fluid)
+        T_triple = max(CP.PropsSI('Tmin', fluid), 200)
+        T_sat_arr = np.linspace(T_triple + 0.5, T_crit - 0.1, 300)
+        S_liq, S_vap, T_dome = [], [], []
+        for T_s in T_sat_arr:
+            try:
+                S_liq.append(CP.PropsSI('S', 'T', T_s, 'Q', 0, fluid) / 1000)
+                S_vap.append(CP.PropsSI('S', 'T', T_s, 'Q', 1, fluid) / 1000)
+                T_dome.append(T_s - 273.15)
+            except Exception:  # noqa: BLE001
+                pass
 
-        pp = PropertyPlot(fluid, 'TS', unit_system='EUR', tp_limits='ORC')
-        pp.calc_isolines(CoolProp.iQ, num=11)
-        cycle = StateContainer()
         if T4 == T1g:
-            # Two-phase turbine exit: 1→2→3f→3→4→1
-            cycle[0, "T"] = T_list[0]
-            cycle[0, "S"] = S_list[0]
-            cycle[1, "T"] = T_list[1]
-            cycle[1, "S"] = S_list[1]
-            cycle[2, "T"] = T3f
-            cycle[2, "S"] = S3f
-            cycle[3, "T"] = T_list[2]
-            cycle[3, "S"] = S_list[2]
-            cycle[4, "T"] = T_list[3]
-            cycle[4, "S"] = S_list[3]
-            cycle[5, "T"] = T_list[0]
-            cycle[5, "S"] = S_list[0]
+            cyc_T = [T1, T2, T3f, T3, T4, T1]
+            cyc_S = [S1, S2, S3f, S3, S4, S1]
+            labels = ['1', '2', '3f', '3', '4']
         else:
-            # Superheated turbine exit: 1→2→3f→3→4→1g→1
-            cycle[0, "T"] = T_list[0]
-            cycle[0, "S"] = S_list[0]
-            cycle[1, "T"] = T_list[1]
-            cycle[1, "S"] = S_list[1]
-            cycle[2, "T"] = T3f
-            cycle[2, "S"] = S3f
-            cycle[3, "T"] = T_list[2]
-            cycle[3, "S"] = S_list[2]
-            cycle[4, "T"] = T_list[3]
-            cycle[4, "S"] = S_list[3]
-            cycle[5, "T"] = T1g
-            cycle[5, "S"] = S1g
-            cycle[6, "T"] = T_list[0]
-            cycle[6, "S"] = S_list[0]
+            cyc_T = [T1, T2, T3f, T3, T4, T1g, T1]
+            cyc_S = [S1, S2, S3f, S3, S4, S1g, S1]
+            labels = ['1', '2', '3f', '3', '4', '1g']
 
-        pp.draw_process(cycle)
-        pp.draw()
-        pp.figure.set_size_inches(6, 5)
+        cyc_T_C = [t - 273.15 for t in cyc_T]
+        cyc_S_kJ = [s / 1000 for s in cyc_S]
+
+        fig, ax = plt.subplots(figsize=(6, 5))
+        ax.plot(S_liq, T_dome, color='steelblue', linewidth=1.5)
+        ax.plot(S_vap, T_dome, color='steelblue', linewidth=1.5)
+        ax.plot(cyc_S_kJ, cyc_T_C, 'r-', linewidth=2)
+        ax.plot(cyc_S_kJ[:-1], cyc_T_C[:-1], 'ro', markersize=5)
+        for i, lbl in enumerate(labels):
+            ax.annotate(lbl, (cyc_S_kJ[i], cyc_T_C[i]),
+                        textcoords='offset points', xytext=(5, 4),
+                        fontsize=8, color='darkred')
+        ax.set_xlabel('Entropy [kJ/(kg·K)]')
+        ax.set_ylabel('Temperature [°C]')
+        ax.set_title(f'T-s Diagram – {fluid}')
+        ax.grid(True, alpha=0.3)
+        fig.tight_layout()
 
         buf = io.BytesIO()
-        pp.figure.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+        fig.savefig(buf, format='png', dpi=100)
         buf.seek(0)
         plot_b64 = base64.b64encode(buf.read()).decode('utf-8')
         plt.close('all')
