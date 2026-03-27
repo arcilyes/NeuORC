@@ -268,55 +268,91 @@ def calculate():
         X3 = 1.0
         X4_disp = X4
 
-        # Generate T-S diagram with direct matplotlib (no PropertyPlot.draw)
+        # ── Saturation dome data (shared by both diagrams) ──────────────
         T_crit = CP.PropsSI('Tcrit', fluid)
         T_triple = max(CP.PropsSI('Tmin', fluid), 200)
-        T_sat_arr = np.linspace(T_triple + 0.5, T_crit - 0.1, 300)
-        S_liq, S_vap, T_dome = [], [], []
+        T_sat_arr = np.linspace(T_triple + 0.5, T_crit - 0.05, 280)
+        S_liq, S_vap, H_liq, H_vap, P_sat, T_dome = [], [], [], [], [], []
         for T_s in T_sat_arr:
             try:
                 S_liq.append(CP.PropsSI('S', 'T', T_s, 'Q', 0, fluid) / 1000)
                 S_vap.append(CP.PropsSI('S', 'T', T_s, 'Q', 1, fluid) / 1000)
+                H_liq.append(CP.PropsSI('H', 'T', T_s, 'Q', 0, fluid) / 1000)
+                H_vap.append(CP.PropsSI('H', 'T', T_s, 'Q', 1, fluid) / 1000)
+                P_sat.append(CP.PropsSI('P', 'T', T_s, 'Q', 0, fluid) / 1e5)
                 T_dome.append(T_s - 273.15)
             except Exception:  # noqa: BLE001
                 pass
+        # Close dome at critical point
+        S_crit = CP.PropsSI('S', 'T', T_crit, 'Q', 0.5, fluid) / 1000
+        H_crit = CP.PropsSI('H', 'T', T_crit, 'Q', 0.5, fluid) / 1000
+        P_crit = CP.PropsSI('P', 'T', T_crit, 'Q', 0, fluid) / 1e5
+        T_crit_C = T_crit - 273.15
+        dome_S = S_liq + [S_crit] + S_vap[::-1]
+        dome_T = T_dome + [T_crit_C] + T_dome[::-1]
+        dome_H = H_liq + [H_crit] + H_vap[::-1]
+        dome_P = P_sat + [P_crit] + P_sat[::-1]
 
+        # ── Cycle state arrays ────────────────────────────────────────────
         if T4 == T1g:
             cyc_T = [T1, T2, T3f, T3, T4, T1]
             cyc_S = [S1, S2, S3f, S3, S4, S1]
+            cyc_H = [H1, H2, H3f, H3, H4, H1]
+            cyc_P = [P1, P2, P3, P3, P4, P1]
             labels = ['1', '2', '3f', '3', '4']
         else:
             cyc_T = [T1, T2, T3f, T3, T4, T1g, T1]
             cyc_S = [S1, S2, S3f, S3, S4, S1g, S1]
+            cyc_H = [H1, H2, H3f, H3, H4, H1g, H1]
+            cyc_P = [P1, P2, P3, P3, P4, P4, P1]
             labels = ['1', '2', '3f', '3', '4', '1g']
 
-        cyc_T_C = [t - 273.15 for t in cyc_T]
+        cyc_T_C  = [t - 273.15 for t in cyc_T]
         cyc_S_kJ = [s / 1000 for s in cyc_S]
+        cyc_H_kJ = [h / 1000 for h in cyc_H]
+        cyc_P_bar = [p / 1e5 for p in cyc_P]
 
-        fig, ax = plt.subplots(figsize=(6, 5))
-        ax.plot(S_liq, T_dome, color='steelblue', linewidth=1.5)
-        ax.plot(S_vap, T_dome, color='steelblue', linewidth=1.5)
-        ax.plot(cyc_S_kJ, cyc_T_C, 'r-', linewidth=2)
-        ax.plot(cyc_S_kJ[:-1], cyc_T_C[:-1], 'ro', markersize=5)
-        for i, lbl in enumerate(labels):
-            ax.annotate(lbl, (cyc_S_kJ[i], cyc_T_C[i]),
-                        textcoords='offset points', xytext=(5, 4),
-                        fontsize=8, color='darkred')
-        ax.set_xlabel('Entropy [kJ/(kg·K)]')
-        ax.set_ylabel('Temperature [°C]')
-        ax.set_title(f'T-s Diagram – {fluid}')
-        ax.grid(True, alpha=0.3)
-        fig.tight_layout()
+        def _make_plot(xdata, ydata, xlabel, ylabel, title,
+                       dome_x, dome_y, logy=False):
+            fig2, ax2 = plt.subplots(figsize=(6, 5))
+            ax2.plot(dome_x, dome_y, color='steelblue', linewidth=1.5)
+            ax2.plot(xdata, ydata, 'r-', linewidth=2)
+            ax2.plot(xdata[:-1], ydata[:-1], 'ro', markersize=5)
+            for i, lbl in enumerate(labels):
+                ax2.annotate(lbl, (xdata[i], ydata[i]),
+                             textcoords='offset points', xytext=(5, 4),
+                             fontsize=8, color='darkred')
+            ax2.set_xlabel(xlabel)
+            ax2.set_ylabel(ylabel)
+            ax2.set_title(title)
+            if logy:
+                ax2.set_yscale('log')
+            ax2.grid(True, alpha=0.3)
+            fig2.tight_layout()
+            buf2 = io.BytesIO()
+            fig2.savefig(buf2, format='png', dpi=100)
+            buf2.seek(0)
+            b64 = base64.b64encode(buf2.read()).decode('utf-8')
+            plt.close(fig2)
+            return b64
 
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=100)
-        buf.seek(0)
-        plot_b64 = base64.b64encode(buf.read()).decode('utf-8')
-        plt.close('all')
+        plot_ts = _make_plot(
+            cyc_S_kJ, cyc_T_C,
+            'Entropy [kJ/(kg·K)]', 'Temperature [°C]',
+            f'T-s Diagram – {fluid}',
+            dome_S, dome_T
+        )
+        plot_hp = _make_plot(
+            cyc_H_kJ, cyc_P_bar,
+            'Enthalpy [kJ/kg]', 'Pressure [bar]',
+            f'h-P Diagram – {fluid}',
+            dome_H, dome_P, logy=True
+        )
 
         return jsonify({
             'success': True,
-            'plot': plot_b64,
+            'plot_ts': plot_ts,
+            'plot_hp': plot_hp,
             'summary': {
                 'eta_thermal': round(Eff, 4),
                 'eta_exergy': round(etaexergy, 4),
